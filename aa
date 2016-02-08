@@ -1,0 +1,383 @@
+package com.concuncan.TheTowers;
+
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+import org.black_ixx.playerpoints.PlayerPoints;
+import org.black_ixx.playerpoints.PlayerPointsAPI;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.Server;
+import org.bukkit.Sound;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.FallingBlock;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.Messenger;
+import org.bukkit.scheduler.BukkitScheduler;
+import ru.tehkode.permissions.PermissionUser;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
+
+public class Core extends JavaPlugin
+  implements Listener
+{
+  public int Fin = 0;
+  ArrayList<String> azul = new ArrayList();
+  ArrayList<String> rojo = new ArrayList();
+  ArrayList<String> bugs = new ArrayList();
+  File Errores;
+  FileConfiguration errores;
+  private PlayerPoints playerPoints;
+
+  private boolean hookPlayerPoints()
+  {
+    Plugin plugin = getServer().getPluginManager().getPlugin("PlayerPoints");
+    this.playerPoints = ((PlayerPoints)PlayerPoints.class.cast(plugin));
+    return this.playerPoints != null;
+  }
+
+  public PlayerPoints getPlayerPoints()
+  {
+    return this.playerPoints;
+  }
+
+  public void onEnable()
+  {
+    getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+
+    getServer().getPluginManager().registerEvents(this, this);
+    hookPlayerPoints();
+  }
+  public void tolobby() {
+    for (Player on : getServer().getOnlinePlayers()) {
+      ByteArrayDataOutput out = ByteStreams.newDataOutput();
+      out.writeUTF("Connect");
+      out.writeUTF("lobby");
+      on.sendPluginMessage(this, "BungeeCord", out.toByteArray());
+    }
+  }
+
+  @EventHandler
+  public void alEntrar(PlayerJoinEvent e) {
+    e.setJoinMessage(null);
+    if ((!this.azul.contains(e.getPlayer().getName())) || (this.rojo.contains(e.getPlayer().getName())))
+    {
+      e.getPlayer().getInventory().setItem(8, createItem(Material.NETHER_STAR, 1, 0, "§7Información", "§7Informacion sobre como funciona TheTowers en GMIP."));
+      e.getPlayer().getInventory().setItem(4, createItem(Material.DIAMOND, 1, 0, "§aRangos VIP, VIP+ y PRO §7(Clic derecho para abrir)", "§7VIP §ax2 coins\n§7VIP+ §ax2 coins\n§7PRO §ax2 coins\n\n§7Consiguelo en:\n§bgamesmadeinpola.buycraft.net"));
+    }
+  }
+
+  @EventHandler
+  public void AlInteractuar(PlayerInteractEvent e) {
+    Action a = e.getAction();
+    ItemStack i = e.getItem();
+    if ((a == Action.PHYSICAL) || (i == null) || (i.getType() == Material.AIR) || (a == Action.LEFT_CLICK_AIR) || (a == Action.LEFT_CLICK_BLOCK)) {
+      return;
+    }
+    if (i.getType() == Material.WATCH) {
+      e.getPlayer().sendMessage("§7Pagina: §bgamesmadeinpola.buycraft.net §7(Clic para abrir)");
+    }
+    if (i.getType() == Material.NETHER_STAR)
+      e.getPlayer().sendMessage(new StringBuilder().append(ChatColor.GREEN).append("[Info] ").append(ChatColor.GRAY).append("En nuestro servidor, utilizamos una version modificada del juego ").append(ChatColor.GREEN).append("TheTowers ").append(ChatColor.GRAY).append("creada y customizada por ").append(ChatColor.GREEN).append("concuncan").append(ChatColor.GRAY).append(". Esta version sigue usando bloques de comando, pero tambien incluye un plugin que da algunas funciones de personalizacion (Por ejemplo: ").append(ChatColor.GREEN).append("Que no se caiga la armadura al morir").append(ChatColor.GRAY).append("). Esta version fue creada originalmente para ").append(ChatColor.GREEN).append("GMIP ").append(ChatColor.GRAY).append("y esta prohibida la distribucion y/o la copia del plugin sin una autorización de ").append(ChatColor.GREEN).append("concuncan").append(ChatColor.GRAY).append(".").toString());
+  }
+
+  public ItemStack createItem(Material material, int amount, short shrt, String displayname, String lore)
+  {
+    ItemStack item = new ItemStack(material, amount, shrt);
+    ItemMeta meta = item.getItemMeta();
+    meta.setDisplayName(displayname);
+    ArrayList Lore = new ArrayList();
+    if (displayname.contains("PRO"))
+    {
+      Lore.add("§6VIP §ax2 coins");
+      Lore.add("§6VIP§a+ x3 coins");
+      Lore.add("§6PRO §ax4 coins");
+      Lore.add("");
+      Lore.add("§7Consiguelo en §bgamesmadeinpola.buycraft.net");
+    }
+    else
+    {
+      Lore.add(lore);
+    }
+    meta.setLore(Lore);
+
+    item.setItemMeta(meta);
+    return item;
+  }
+
+  @EventHandler
+  public void alSalir(PlayerQuitEvent e) {
+    e.setQuitMessage(null);
+  }
+
+  @EventHandler
+  public void onAnvilFall(EntityChangeBlockEvent event) {
+    if (event.getEntityType().equals(EntityType.FALLING_BLOCK))
+    {
+      FallingBlock fb = (FallingBlock)event.getEntity();
+      if ((fb.getMaterial().equals(Material.ANVIL)) && (event.getBlock().getType().equals(Material.AIR)))
+      {
+        fb.getWorld().playSound(fb.getLocation(), Sound.ANVIL_BREAK, 1.0F, 1.0F);
+        fb.remove();
+        event.getBlock().setType(Material.ANVIL);
+        event.getBlock().breakNaturally();
+        event.setCancelled(true);
+      }
+    }
+  }
+
+  @EventHandler
+  public void AlMorir(PlayerDeathEvent event) {
+    List drops = event.getDrops();
+
+    ListIterator litr = drops.listIterator();
+    while (litr.hasNext())
+    {
+      ItemStack stack = (ItemStack)litr.next();
+      if ((stack.getType().equals(Material.LEATHER_HELMET)) || (stack.getType().equals(Material.LEATHER_CHESTPLATE)) || (stack.getType().equals(Material.LEATHER_LEGGINGS)) || (stack.getType().equals(Material.LEATHER_BOOTS)))
+        litr.remove();
+    }
+  }
+
+  @EventHandler
+  public void AlDroppear(PlayerDropItemEvent e)
+  {
+    ItemStack stack = e.getItemDrop().getItemStack();
+    if ((stack.getType().equals(Material.LEATHER_HELMET)) || (stack.getType().equals(Material.LEATHER_CHESTPLATE)) || (stack.getType().equals(Material.LEATHER_LEGGINGS)) || (stack.getType().equals(Material.LEATHER_BOOTS)))
+      e.setCancelled(true);
+  }
+
+  @EventHandler
+  public void onChat(AsyncPlayerChatEvent event)
+  {
+    Player player = event.getPlayer();
+    PermissionUser user = PermissionsEx.getUser(player.getName());
+    if (this.azul.contains(player.getName()))
+    {
+      event.setCancelled(true);
+      for (String nombre : this.azul) {
+        Player usuario = getServer().getPlayer(nombre);
+        if (player.hasPermission("gmip.colores"))
+          usuario.sendMessage(new StringBuilder().append(ChatColor.BLUE).append("[Azul] ").append(ChatColor.GRAY).append(player.getName()).append(" ").append(ChatColor.translateAlternateColorCodes('&', user.getPrefix())).append(ChatColor.DARK_GRAY).append(" : ").append(ChatColor.GRAY).append(ChatColor.translateAlternateColorCodes('&', event.getMessage())).toString());
+        else {
+          usuario.sendMessage(new StringBuilder().append(ChatColor.BLUE).append("[Azul] ").append(ChatColor.GRAY).append(player.getName()).append(" ").append(ChatColor.translateAlternateColorCodes('&', user.getPrefix())).append(ChatColor.DARK_GRAY).append(" : ").append(ChatColor.GRAY).append(event.getMessage()).toString());
+        }
+      }
+    }
+    else if (this.rojo.contains(player.getName()))
+    {
+      event.setCancelled(true);
+      for (String nombre : this.rojo) {
+        Player usuario = getServer().getPlayer(nombre);
+        if (player.hasPermission("gmip.colores"))
+          usuario.sendMessage(new StringBuilder().append(ChatColor.RED).append("[Rojo] ").append(ChatColor.GRAY).append(player.getName()).append(" ").append(ChatColor.translateAlternateColorCodes('&', user.getPrefix())).append(ChatColor.DARK_GRAY).append(" : ").append(ChatColor.GRAY).append(ChatColor.translateAlternateColorCodes('&', event.getMessage())).toString());
+        else {
+          usuario.sendMessage(new StringBuilder().append(ChatColor.RED).append("[Rojo] ").append(ChatColor.GRAY).append(player.getName()).append(" ").append(ChatColor.translateAlternateColorCodes('&', user.getPrefix())).append(ChatColor.DARK_GRAY).append(" : ").append(ChatColor.GRAY).append(event.getMessage()).toString());
+        }
+      }
+    }
+    else
+    {
+      event.setCancelled(true);
+      for (Player on : getServer().getOnlinePlayers())
+        if ((!this.rojo.contains(on)) && (!this.azul.contains(on)))
+          if (player.hasPermission("gmip.colores"))
+            on.sendMessage(new StringBuilder().append(ChatColor.GOLD).append("[Lobby] ").append(ChatColor.GRAY).append(player.getName()).append(" ").append(ChatColor.translateAlternateColorCodes('&', user.getPrefix())).append(ChatColor.DARK_GRAY).append(" : ").append(ChatColor.GRAY).append(ChatColor.translateAlternateColorCodes('&', event.getMessage())).toString());
+          else
+            on.sendMessage(new StringBuilder().append(ChatColor.GOLD).append("[Lobby] ").append(ChatColor.GRAY).append(player.getName()).append(" ").append(ChatColor.translateAlternateColorCodes('&', user.getPrefix())).append(ChatColor.DARK_GRAY).append(" : ").append(ChatColor.GRAY).append(event.getMessage()).toString());
+    }
+  }
+
+  public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)
+  {
+    if (cmd.getName().equalsIgnoreCase("say"))
+    {
+      if (!sender.hasPermission("thetowers.say")) {
+        return true;
+      }
+      if (args.length == 0)
+      {
+        sender.sendMessage(new StringBuilder().append(ChatColor.RED).append("Mensaje porfavor.").toString());
+        return false;
+      }
+      StringBuilder message = new StringBuilder();
+      message.append(ChatColor.GREEN).append("[");
+      if ((sender instanceof ConsoleCommandSender))
+        message.append("TheTowers");
+      else if ((sender instanceof Player))
+        message.append("TheTowers");
+      else {
+        message.append("TheTowers");
+      }
+      message.append(ChatColor.GREEN).append("] ").append(ChatColor.GRAY);
+      if (args.length > 0)
+      {
+        message.append(args[0]);
+        for (int i = 1; i < args.length; i++) {
+          message.append(" ").append(args[i]);
+        }
+      }
+      Bukkit.broadcastMessage(message.toString().replaceAll("azul", new StringBuilder().append(ChatColor.BLUE).append("azul").append(ChatColor.GRAY).toString()).replaceAll("AZUL", new StringBuilder().append(ChatColor.BLUE).append("azul").append(ChatColor.GRAY).toString()).replaceAll("rojo", new StringBuilder().append(ChatColor.RED).append("rojo").append(ChatColor.GRAY).toString()).replaceAll("ROJO", new StringBuilder().append(ChatColor.RED).append("rojo").append(ChatColor.GRAY).toString()).replaceAll("&c ", "§c").replaceAll("&9 ", "§9").replaceAll("&", "§"));
+    }
+    if (cmd.getName().equalsIgnoreCase("equipo")) {
+      if ((sender instanceof ConsoleCommandSender))
+      {
+        sender.sendMessage("Solo bloques de comando.");
+      }
+      else if ((sender instanceof Player))
+      {
+        sender.sendMessage("Aqui no es necesario usar comandos.");
+      }
+      else if (Bukkit.getPlayer(args[1]) == null)
+      {
+        sender.sendMessage("Ese usuario no existe.");
+      }
+      else
+      {
+        if (args.length == 0)
+        {
+          sender.sendMessage(new StringBuilder().append(ChatColor.RED).append("Usuario y equipo porfavor.").toString());
+          return false;
+        }
+        if (args.length == 1)
+        {
+          sender.sendMessage(new StringBuilder().append(ChatColor.RED).append("Usuario porfavor.").toString());
+          return false;
+        }
+        if (args[0].equalsIgnoreCase("azul"))
+        {
+          if (this.azul.contains(Bukkit.getPlayer(args[1]).getName())) {
+            this.azul.remove(Bukkit.getPlayer(args[1]).getName());
+          }
+          if (this.rojo.contains(Bukkit.getPlayer(args[1]).getName())) {
+            this.rojo.remove(Bukkit.getPlayer(args[1]).getName());
+          }
+          this.azul.add(Bukkit.getPlayer(args[1]).getName());
+        }
+        if (args[0].equalsIgnoreCase("rojo"))
+        {
+          if (this.azul.contains(Bukkit.getPlayer(args[1]).getName())) {
+            this.azul.remove(Bukkit.getPlayer(args[1]).getName());
+          }
+          if (this.rojo.contains(Bukkit.getPlayer(args[1]).getName())) {
+            this.rojo.remove(Bukkit.getPlayer(args[1]).getName());
+          }
+          this.rojo.add(Bukkit.getPlayer(args[1]).getName());
+        }
+        if (args[0].equalsIgnoreCase("salir"))
+        {
+          if (this.azul.contains(Bukkit.getPlayer(args[1]).getName())) {
+            this.azul.remove(Bukkit.getPlayer(args[1]).getName());
+          }
+          if (this.rojo.contains(Bukkit.getPlayer(args[1]).getName())) {
+            this.rojo.remove(Bukkit.getPlayer(args[1]).getName());
+          }
+        }
+      }
+    }
+    if (cmd.getName().equalsIgnoreCase("dar"))
+    {
+      if (!sender.hasPermission("thetowers.dar")) {
+        return true;
+      }
+      if ((sender instanceof ConsoleCommandSender))
+      {
+        sender.sendMessage("Solo bloques de comando.");
+      }
+      else if ((sender instanceof Player))
+      {
+        sender.sendMessage("Aqui no es necesario usar comandos.");
+      }
+      else
+      {
+        if (args.length == 0)
+        {
+          sender.sendMessage(new StringBuilder().append(ChatColor.RED).append("Usuario porfavor.").toString());
+          return false;
+        }
+        if (args.length == 1)
+        {
+          Player jugador = Bukkit.getPlayer(args[0]);
+          if ((jugador.hasPermission("coinsganar.doble")) && (!jugador.hasPermission("coinsganar.triple")) && (!jugador.hasPermission("coinsganar.cuadruple")))
+          {
+            this.playerPoints.getAPI().give(jugador.getUniqueId(), 40);
+            jugador.sendMessage(new StringBuilder().append(ChatColor.GOLD).append("+40 ").append(ChatColor.GRAY).append("points.").toString());
+            return false;
+          }
+          if ((jugador.hasPermission("coinsganar.doble")) && (jugador.hasPermission("coinsganar.triple")) && (!jugador.hasPermission("coinsganar.cuadruple")))
+          {
+            this.playerPoints.getAPI().give(jugador.getUniqueId(), 60);
+            jugador.sendMessage(new StringBuilder().append(ChatColor.GOLD).append("+60 ").append(ChatColor.GRAY).append("points.").toString());
+            return false;
+          }
+          if ((jugador.hasPermission("coinsganar.doble")) && (jugador.hasPermission("coinsganar.triple")) && (jugador.hasPermission("coinsganar.cuadruple")))
+          {
+            this.playerPoints.getAPI().give(jugador.getUniqueId(), 80);
+            jugador.sendMessage(new StringBuilder().append(ChatColor.GOLD).append("+80 ").append(ChatColor.GRAY).append("points.").toString());
+            return false;
+          }
+          this.playerPoints.getAPI().give(jugador.getUniqueId(), 20);
+          jugador.sendMessage(new StringBuilder().append(ChatColor.GOLD).append("+20 ").append(ChatColor.GRAY).append("points.").toString());
+        }
+      }
+    }
+    if (cmd.getName().equalsIgnoreCase("end")) {
+      if ((sender instanceof ConsoleCommandSender))
+      {
+        sender.sendMessage("Solo bloques de comando.");
+      }
+      else if ((sender instanceof Player))
+      {
+        sender.sendMessage("Aqui no es necesario usar comandos.");
+      }
+      else this.Fin = getServer().getScheduler().scheduleSyncRepeatingTask(this, new End(this), 0L, 20L);
+    }
+
+    if (cmd.getName().equalsIgnoreCase("sendinstrucciones")) {
+      if ((sender instanceof ConsoleCommandSender))
+      {
+        sender.sendMessage("Solo bloques de comando.");
+      }
+      else if ((sender instanceof Player))
+      {
+        sender.sendMessage("Aqui no es necesario usar comandos.");
+      } else {
+        for (String rojos : this.rojo) {
+          Player usuario = getServer().getPlayer(rojos);
+          usuario.sendMessage(new StringBuilder().append(ChatColor.GREEN).append("[TheTowers] ").append(ChatColor.GRAY).append("Objetivo: ").append(ChatColor.GREEN).append("Ve a la base azul y consigue 10 puntos para tu equipo.").toString());
+        }
+        for (String azules : this.azul) {
+          Player usuario = getServer().getPlayer(azules);
+          usuario.sendMessage(new StringBuilder().append(ChatColor.GREEN).append("[TheTowers] ").append(ChatColor.GRAY).append("Objetivo: ").append(ChatColor.GREEN).append("Ve a la base roja y consigue 10 puntos para tu equipo.").toString());
+        }
+      }
+    }
+    return false;
+  }
+}
